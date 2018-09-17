@@ -1,15 +1,17 @@
 // Create a centered text item at the center of the view:
-var path = new Path();
-path.strokeColor = 'white';
-path.add(new Point(0, 60));
-path.add(new Point(8, 30));
-path.add(new Point(16, 60));
-path.closed = true;
+var triangle = new Path();
+triangle.strokeColor = 'white';
+triangle.add(new Point(0, 60));
+triangle.add(new Point(8, 30));
+triangle.add(new Point(16, 60));
+triangle.closed = true;
+
+triangle.rotate(90);
 
 
 var destination = view.center;
 
-var vector = destination - path.position;
+var vector = destination - triangle.position;
 
 var c = new Path.Circle(destination, 2);
 c.style = {
@@ -17,5 +19,6 @@ c.style = {
 	strokeColor: 'white'
 };
 
-//path.position += vector / 30;
-path.rotate(vector.angle);
+//triangle.position += vector / 30;
+triangle.rotate(-0);
+triangle.rotate(vector.angle);

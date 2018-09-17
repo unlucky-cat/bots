@@ -1,10 +1,14 @@
 // Create a centered text item at the center of the view:
-var path = new Path();
-path.strokeColor = 'white';
-path.add(new Point(0, 60));
-path.add(new Point(8, 30));
-path.add(new Point(16, 60));
-path.closed = true;
+var boid = new Path();
+boid.strokeColor = 'white';
+boid.add(new Point(0, 60));
+boid.add(new Point(8, 30));
+boid.add(new Point(16, 60));
+boid.closed = true;
+boid.position = view.center;
+
+// aligning boid along X axys (0 degrees)
+boid.rotate(90);
 
 // dependency injection point
 // wrapper-function for decision making (DM)
@@ -17,20 +21,23 @@ var callDecisionMakerForDestination = function(context)
     });
 };
 
-var destination = view.center;
+var destination = callDecisionMakerForDestination("");
+var vector = destination - boid.position;
+
+// saving current angle in order to return it back to 0 degree by rotating boid back later
+var prevAngle = -vector.angle;
+boid.rotate(vector.angle);
 
 function onFrame(event) {
 
-    var vector = destination - path.position;
-    
-    // We add 1/30th of the vector to the position property
-    // of the text item, to move it in the direction of the
-    // destination point:
-    path.position += vector / 30;
-    
+    vector = destination - boid.position;
+    boid.position += vector / 30;   
     
     if (vector.length < 5) {
         destination = callDecisionMakerForDestination("");
-        path.rotate(vector.angle);
+        vector = destination - boid.position;
+        boid.rotate(prevAngle);
+        boid.rotate(vector.angle);
+        prevAngle = -vector.angle;
     }
 }
