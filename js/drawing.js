@@ -4,6 +4,7 @@ boid.strokeColor = 'white';
 boid.add(new Point(0, 60));
 boid.add(new Point(8, 30));
 boid.add(new Point(16, 60));
+boid.scaling *= 0.5;
 boid.closed = true;
 boid.position = view.center;
 
@@ -30,10 +31,12 @@ boid.rotate(vector.angle);
 
 function onFrame(event) {
 
-    vector = destination - boid.position;
-    boid.position += vector / 30;   
+    //boid.position += vector / 30;
+    vector.length = 1; 
+    boid.position += vector;
+    vector = destination - boid.position;    
     
-    if (vector.length < 5) {
+    if (vector.length < 1) {
         destination = callDecisionMakerForDestination("");
         vector = destination - boid.position;
         boid.rotate(prevAngle);
