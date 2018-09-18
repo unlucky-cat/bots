@@ -22,25 +22,62 @@ var callDecisionMakerForDestination = function(context)
     });
 };
 
-var destination = callDecisionMakerForDestination("");
-var vector = destination - boid.position;
+var createJumper = function(speed) {
 
-// saving current angle in order to return it back to 0 degree by rotating boid back later
-var prevAngle = -vector.angle;
-boid.rotate(vector.angle);
+    var destination = callDecisionMakerForDestination("");
+    var vector = destination - boid.position;
+
+    // saving current angle in order to return it back to 0 degree by rotating boid back later
+    var prevAngle = -vector.angle;
+    boid.rotate(vector.angle);
+
+    return {
+        execute: function (event) {
+
+            //boid.position += vector / 30;
+            vector.length = speed; 
+            boid.position += vector;
+            vector = destination - boid.position;    
+            
+            if (vector.length < 1) {
+                destination = callDecisionMakerForDestination("");
+                vector = destination - boid.position;
+                boid.rotate(prevAngle);
+                boid.rotate(vector.angle);
+                prevAngle = -vector.angle;
+            }
+        }
+    }
+}
+
+
+var createWanderer = function(speed) {
+
+    var destination = callDecisionMakerForDestination("");
+    var vector = destination - boid.position;
+    vector.length = speed;
+    boid.rotate(vector.angle);
+
+    return {
+        execute: function onFrame(event) {
+        
+            var nextPos = boid.position + vector;
+            var jumpPos;
+
+            if (nextPos.x <= 0) jumpPos = new Point(view.size.x, nextPos.y);
+            else jumpPos = nextPos;
+
+            jumpPos = nextPos;
+            boid.position = jumpPos;
+        }
+    }
+}
+
+
+//var action = createJumper(1);
+var action = createWanderer(1);
 
 function onFrame(event) {
 
-    //boid.position += vector / 30;
-    vector.length = 1; 
-    boid.position += vector;
-    vector = destination - boid.position;    
-    
-    if (vector.length < 1) {
-        destination = callDecisionMakerForDestination("");
-        vector = destination - boid.position;
-        boid.rotate(prevAngle);
-        boid.rotate(vector.angle);
-        prevAngle = -vector.angle;
-    }
+    action.execute(event);
 }
