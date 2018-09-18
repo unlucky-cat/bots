@@ -64,10 +64,13 @@ var createWanderer = function(speed) {
             var nextPos = boid.position + vector;
             var jumpPos;
 
-            if (nextPos.x <= 0) jumpPos = new Point(view.size.x, nextPos.y);
+            if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
+            else if (nextPos.x >= view.size.width) jumpPos = new Point(0, nextPos.y);
+            else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, view.size.height);
+            else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
             else jumpPos = nextPos;
 
-            jumpPos = nextPos;
+            //jumpPos = nextPos;
             boid.position = jumpPos;
         }
     }
