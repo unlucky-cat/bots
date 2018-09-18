@@ -1,14 +1,13 @@
 var dm = (function() {
 
-    var x = a => a * 4;
-    console.log(x(4));
-
     return {
         map: function(context, callback)
         {
             let dest = {
                 x: Math.random(),
                 y: Math.random(),
+                interval: 500 + Math.random() * 1500, // from 500 to 2000 millis
+                degree: Math.random() * 10 - 5, // +- 5 degrees
             };
 
             // console.log(context);
