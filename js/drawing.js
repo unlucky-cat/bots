@@ -58,6 +58,7 @@ var createJumper = function(speed) {
 var createWanderer = function(speed) {
 
     var decision = getDecision("");
+    //decision.dest.length = 1000;
     var vector = decision.dest - boid.position;
     var targetTime = Date.now() + decision.interval;
     vector.length = speed;
@@ -72,6 +73,7 @@ var createWanderer = function(speed) {
             if (Date.now() >= targetTime) {
                 vector.angle += decision.degree;
                 decision = getDecision("");
+                //decision.dest.length = 1000;
                 targetTime = Date.now() + decision.interval;
 
                 boid.rotate(prevAngle);
@@ -80,6 +82,7 @@ var createWanderer = function(speed) {
             }
 
             var nextPos = boid.position + vector;
+
             var jumpPos;
 
             if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
@@ -90,6 +93,8 @@ var createWanderer = function(speed) {
 
             //jumpPos = nextPos;
             boid.position = jumpPos;
+            //vector = decision.dest - boid.position; // we update vector's position in order to rotating work properly from it's middle-point
+            //vector.length = speed;
         }
     }
 }
