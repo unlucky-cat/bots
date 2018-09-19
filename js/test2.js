@@ -1,4 +1,4 @@
-// Create a centered text item at the center of the view:
+// Creating a triangle object
 var boid = new Path();
 boid.strokeColor = 'white';
 boid.add(new Point(0, 60));
@@ -8,15 +8,28 @@ boid.closed = true;
 
 boid.scaling *= 4;
 boid.fullySelected = true;
+
+// positioned it to the screen's center
 boid.position = view.center;
 
-
-var c = new Path.Circle(boid.position, 2);
-c.strokeColor = 'white'
+var r = new Path.Rectangle(boid.bounds);
+r.strokeColor = 'yellow';
 
 function onFrame(event) {
 
-	boid.rotate(0.3);
+    boid.rotate(0.3);
+
+    r.remove();
+    r = new Path.Rectangle(boid.bounds);
+    r.strokeColor = 'yellow';
+    
+    // drawing rectangle's center
     var v = new Path.Circle(boid.position, 2);
     v.strokeColor = 'lime';
+
+    // drawing point
+    var c = new Path.Circle(view.center, 2);
+    c.strokeColor = 'red';
+
+    //r.remove();
 }
