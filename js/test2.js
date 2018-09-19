@@ -9,15 +9,16 @@ boid.closed = true;
 boid.scaling *= 4;
 boid.fullySelected = true;
 
-// positioned it to the screen's center
 boid.position = view.center;
+
+//TODO add Symbols!!!!
 
 var r = new Path.Rectangle(boid.bounds);
 r.strokeColor = 'yellow';
 
 function onFrame(event) {
 
-    boid.rotate(0.3);
+    boid.rotate(0.7);
 
     r.remove();
     r = new Path.Rectangle(boid.bounds);
