@@ -15,22 +15,23 @@ boid.position = view.center;
 
 var r = new Path.Rectangle(boid.bounds);
 r.strokeColor = 'yellow';
+var rs = new Symbol(r);
+var rect = rs.place(boid.position);
+
+var v = new Path.Circle(boid.position, 2);
+v.strokeColor = 'lime';
+var vs = new Symbol(v);
+var rectCenter = vs.place(boid.position);
 
 function onFrame(event) {
 
     boid.rotate(0.7);
 
-    r.remove();
-    r = new Path.Rectangle(boid.bounds);
-    r.strokeColor = 'yellow';
+    rect.remove();
+    rect = rs.place(boid.position);
+    rect.bounds = boid.bounds;
     
     // drawing rectangle's center
-    var v = new Path.Circle(boid.position, 2);
-    v.strokeColor = 'lime';
-
-    // drawing point
-    var c = new Path.Circle(view.center, 2);
-    c.strokeColor = 'red';
-
-    //r.remove();
+    rectCenter.remove();
+    rectCenter = vs.place(boid.position);
 }
