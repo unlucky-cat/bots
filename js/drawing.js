@@ -26,6 +26,13 @@ var getDecision = function(context)
     });
 };
 
+var getCentroid = function(path) {
+    var x = path.segments.reduce(function(acc, curr) { return acc + curr.point.x; }, 0);
+    var y = path.segments.reduce(function(acc, curr) { return acc + curr.point.y; }, 0);
+
+    return new Point(x/3, y/3);
+};
+
 var createJumper = function(speed) {
 
     var destination = getDecision("").dest;
