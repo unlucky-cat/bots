@@ -7,7 +7,7 @@
         <link rel="shortcut icon" href="#">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <!--<link rel="stylesheet" type="text/css" media="screen" href="main.css" />-->
-        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <!--<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">-->
         <script type="text/javascript" src="node_modules/paper/dist/paper-full.js"></script>
         <script type="text/paperscript" src="js/drawing.js" canvas="world"></script>
         <script type="text/paperscript" src="js/test.js" canvas="test"></script>
@@ -15,13 +15,15 @@
     </head>
 
     <body>
-        <h1>Triangle rotation issue</h1>
+        <h1>Triangle rotation issue2</h1>
         <canvas id="world" resize="true" width="400" height="200" style="background: black;"></canvas>
         <canvas id="test2" resize="true" width="400" height="200" style="background: black;"></canvas>
         <div style="position:relative; height:200px; width:400px">
             <canvas id="test" resize="true" style="z-index:1; background: black; width:100%; height:100%"></canvas>
             <div id="btn-1" class="w3-btn w3-tiny w3-ripple w3-orange" 
                 style="z-index:2; position:absolute; bottom:2px; right:2px">rotate45</div>
+            <div id="btn-2" class="w3-btn w3-tiny w3-ripple w3-orange" 
+                style="z-index:2; position:absolute; bottom:2px; right:82px">jump left</div>
         </div>
         
     </body>
