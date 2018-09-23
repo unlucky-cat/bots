@@ -59,8 +59,7 @@ var center = drawCircle(view.center, 3, 'orange');
 var destination = getDecision("").dest;
 var dest = drawCircle(destination, 2, 'white');
 var vector = destination - getCentroid(boid);
-boid.rotate(vector.angle);
-vector = destination - getCentroid(boid);
+boid.rotate(vector.angle, getCentroid(boid));
 vector.length = 5;
 //jumpTo(boid, destination);
 
