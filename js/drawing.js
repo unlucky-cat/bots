@@ -1,15 +1,45 @@
-// Create a centered text item at the center of the view:
-var boid = new Path();
+////////////////////// Path Extensions //////////////////////
+
+Path.Triangle = function Triangle(p1, p2, p3) {
+    Path.call(this, [p1, p2, p3]);
+    this.closed = true;
+
+    this.get_centroid = function() {
+        var x = this.segments.reduce(function(acc, curr) { return acc + curr.point.x; }, 0);
+        var y = this.segments.reduce(function(acc, curr) { return acc + curr.point.y; }, 0);
+    
+        return new Point(x/3, y/3);
+    }
+
+    this.get_vector_to = function(point) {
+        return point - this.get_centroid();
+    }
+
+    this.move_to = function(point) {
+        this.position += this.get_vector_to(point);
+    }
+
+    this.rotate_centroid = function(a) {
+        this.rotate(a, this.get_centroid());
+    }
+}
+
+Path.Triangle.prototype = Object.create(Path.prototype);
+Path.Triangle.prototype.constructor = Path.Triangle;
+
+////////////////////////////////////////////////////////////
+
+var boid = new Path.Triangle(
+    new Point(0, 60),
+    new Point(8, 30),
+    new Point(16, 60)
+)
 boid.strokeColor = 'white';
-boid.add(new Point(0, 60));
-boid.add(new Point(8, 30));
-boid.add(new Point(16, 60));
-boid.scaling *= 0.5;
-boid.closed = true;
-boid.position = view.center;
+boid.scaling *= 1;
+boid.move_to(view.center);
 
 // aligning boid along X axys (0 degrees)
-boid.rotate(90);
+boid.rotate_centroid(90);
 
 // dependency injection point
 // wrapper-function for decision making (DM)
@@ -26,12 +56,15 @@ var getDecision = function(context)
     });
 };
 
-var getCentroid = function(path) {
-    var x = path.segments.reduce(function(acc, curr) { return acc + curr.point.x; }, 0);
-    var y = path.segments.reduce(function(acc, curr) { return acc + curr.point.y; }, 0);
+var drawCircle = function(center, radius, color) {
+	
+	var dest = new Path.Circle(center, radius);
+	dest.fillColor = color;
 
-    return new Point(x/3, y/3);
-}
+	return dest;
+};
+
+var sc = drawCircle(view.center, 2, 'red');
 
 var createJumper = function(speed) {
 
@@ -67,14 +100,14 @@ var createWanderer = function(speed) {
     var decision = getDecision("");
 
     // movementVector represents movement direction (angle) and speed (length)
-    var movementVector = decision.dest - getCentroid(boid);
+    var movementVector = boid.get_vector_to(decision.dest);
     movementVector.length = speed;
 
     var directionChangingTime = Date.now() + decision.interval;
 
     // saving current angle in order to return it back to 0 degree by rotating boid back later
     var prevMovementVectorAngle = movementVector.angle;
-    boid.rotate(movementVector.angle, getCentroid(boid));
+    boid.rotate_centroid(movementVector.angle);
 
     return {
         execute: function onFrame(event) {
@@ -86,14 +119,12 @@ var createWanderer = function(speed) {
                 directionChangingTime = Date.now() + decision.interval;
 
                 // rotating boid "back" to 0 degrees
-                boid.rotate(-prevMovementVectorAngle, getCentroid(boid));
-                boid.rotate(movementVector.angle, getCentroid(boid));
+                boid.rotate_centroid(-prevMovementVectorAngle);
+                boid.rotate_centroid(movementVector.angle);
                 prevMovementVectorAngle = movementVector.angle;
             }
 
-            // it should be boid.position instead of getCentroid
-            // because we will apply it to the boid.position below
-            var nextPos = boid.position + movementVector;
+            var nextPos = boid.get_centroid() + movementVector;
 
 
             // jumping t0 the "other side" of the screen
@@ -105,7 +136,7 @@ var createWanderer = function(speed) {
             else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
             else jumpPos = nextPos;
 
-            boid.position = jumpPos;
+            boid.move_to(jumpPos);
         }
     }
 }
