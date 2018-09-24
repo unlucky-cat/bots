@@ -31,7 +31,7 @@ var getCentroid = function(path) {
     var y = path.segments.reduce(function(acc, curr) { return acc + curr.point.y; }, 0);
 
     return new Point(x/3, y/3);
-};
+}
 
 var createJumper = function(speed) {
 
@@ -65,30 +65,32 @@ var createJumper = function(speed) {
 var createWanderer = function(speed) {
 
     var decision = getDecision("");
-    //decision.dest.length = 1000;
-    var vector = decision.dest - boid.position;
+
+    var rotationVector = decision.dest - getCentroid(boid);
     var targetTime = Date.now() + decision.interval;
-    vector.length = speed;
+    rotationVector.length = speed;
 
     // saving current angle in order to return it back to 0 degree by rotating boid back later
-    var prevAngle = -vector.angle;
-    boid.rotate(vector.angle);
+    var prevAngle = -rotationVector.angle;
+    boid.rotate(rotationVector.angle, getCentroid(boid));
 
     return {
         execute: function onFrame(event) {
                   
             if (Date.now() >= targetTime) {
-                vector.angle += decision.degree;
+                rotationVector.angle += decision.degree;
                 decision = getDecision("");
                 //decision.dest.length = 1000;
                 targetTime = Date.now() + decision.interval;
 
-                boid.rotate(prevAngle);
-                boid.rotate(vector.angle);
-                prevAngle = -vector.angle;
+                boid.rotate(prevAngle, getCentroid(boid));
+                boid.rotate(rotationVector.angle, getCentroid(boid));
+                prevAngle = -rotationVector.angle;
             }
 
-            var nextPos = boid.position + vector;
+            // it sould be boid.position instead of getCentroid
+            // because we will apply it to the boid.position below
+            var nextPos = boid.position + rotationVector;
 
             var jumpPos;
 
@@ -98,14 +100,10 @@ var createWanderer = function(speed) {
             else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
             else jumpPos = nextPos;
 
-            //jumpPos = nextPos;
             boid.position = jumpPos;
-            //vector = decision.dest - boid.position; // we update vector's position in order to rotating work properly from it's middle-point
-            //vector.length = speed;
         }
     }
 }
-
 
 //var action = createJumper(1);
 var action = createWanderer(1);
