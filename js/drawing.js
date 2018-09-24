@@ -39,7 +39,7 @@ var createJumper = function(speed) {
     var vector = destination - boid.position;
 
     // saving current angle in order to return it back to 0 degree by rotating boid back later
-    var prevAngle = -vector.angle;
+    var prevMovementVectorAngle = -vector.angle;
     boid.rotate(vector.angle);
 
     return {
@@ -53,9 +53,9 @@ var createJumper = function(speed) {
             if (vector.length < 1) {
                 destination = getDecision("").dest;
                 vector = destination - boid.position;
-                boid.rotate(prevAngle);
+                boid.rotate(prevMovementVectorAngle);
                 boid.rotate(vector.angle);
-                prevAngle = -vector.angle;
+                prevMovementVectorAngle = -vector.angle;
             }
         }
     }
@@ -66,32 +66,37 @@ var createWanderer = function(speed) {
 
     var decision = getDecision("");
 
-    var rotationVector = decision.dest - getCentroid(boid);
-    var targetTime = Date.now() + decision.interval;
-    rotationVector.length = speed;
+    // movementVector represents movement direction (angle) and speed (length)
+    var movementVector = decision.dest - getCentroid(boid);
+    movementVector.length = speed;
+
+    var directionChangingTime = Date.now() + decision.interval;
 
     // saving current angle in order to return it back to 0 degree by rotating boid back later
-    var prevAngle = -rotationVector.angle;
-    boid.rotate(rotationVector.angle, getCentroid(boid));
+    var prevMovementVectorAngle = movementVector.angle;
+    boid.rotate(movementVector.angle, getCentroid(boid));
 
     return {
         execute: function onFrame(event) {
-                  
-            if (Date.now() >= targetTime) {
-                rotationVector.angle += decision.degree;
+            
+            // is it time to change direction?
+            if (Date.now() >= directionChangingTime) {
+                movementVector.angle += decision.degree;
                 decision = getDecision("");
-                //decision.dest.length = 1000;
-                targetTime = Date.now() + decision.interval;
+                directionChangingTime = Date.now() + decision.interval;
 
-                boid.rotate(prevAngle, getCentroid(boid));
-                boid.rotate(rotationVector.angle, getCentroid(boid));
-                prevAngle = -rotationVector.angle;
+                // rotating boid "back" to 0 degrees
+                boid.rotate(-prevMovementVectorAngle, getCentroid(boid));
+                boid.rotate(movementVector.angle, getCentroid(boid));
+                prevMovementVectorAngle = movementVector.angle;
             }
 
-            // it sould be boid.position instead of getCentroid
+            // it should be boid.position instead of getCentroid
             // because we will apply it to the boid.position below
-            var nextPos = boid.position + rotationVector;
+            var nextPos = boid.position + movementVector;
 
+
+            // jumping t0 the "other side" of the screen
             var jumpPos;
 
             if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
