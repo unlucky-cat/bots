@@ -1,4 +1,4 @@
-////////////////////// Path Extensions //////////////////////
+////////////////////// Triangle //////////////////////
 
 Path.Triangle = function Triangle(p1, p2, p3) {
     Path.call(this, [p1, p2, p3]);
@@ -19,27 +19,102 @@ Path.Triangle = function Triangle(p1, p2, p3) {
         this.position += this.get_vector_to(point);
     }
 
-    this.rotate_centroid = function(a) {
-        this.rotate(a, this.get_centroid());
+    this.rotate_centroid = function(angle) {
+        this.rotate(angle, this.get_centroid());
     }
+/*
+    this.rotate_towards = function(point) {
+
+        var movementVector = this.get_vector_to(point);
+        //movementVector.length = speed;
+        this.rotate_centroid(movementVector.angle);
+
+        return movementVector;
+    }
+*/
 }
 
 Path.Triangle.prototype = Object.create(Path.prototype);
 Path.Triangle.prototype.constructor = Path.Triangle;
 
+///////////////////////// Boid /////////////////////////////
+
+Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed) {
+    
+    // if headIndex > 2 and headIndex < 0 throw exeption!
+
+    Path.Triangle.call(this, p1, p2, p3);
+
+    this.strokeColor = color;
+
+    var getMovementVector = function() {
+
+        var vertices = [p1, p2, p3];
+        var head = vertices.splice(headIndex, 1);
+
+        var x0, y0, x1, x2, y1, y2;
+    
+        if (vertices[0].x > vertices[1].x) {
+            x1 = vertices[0].x;
+            x2 = vertices[1].x; 
+        }
+        else {
+            x1 = vertices[1].x;
+            x2 = vertices[0].x; 
+        }
+    
+        if (vertices[0].y > vertices[1].y) {
+            y1 = vertices[0].y;
+            y2 = vertices[1].y; 
+        }
+        else {
+            y1 = vertices[1].y;
+            y2 = vertices[0].y; 
+        }
+    
+        x0 = x1 + (x2 - x1) / 2;
+        y0 = y1 + (y2 - y1) / 2;
+    
+        var mv = head[0] - new Point(x0, y0);
+        mv.length = initSpeed;
+
+        return mv;
+        //this.prevAngle = movementVector.angle;
+    }
+
+    this.movementVector = getMovementVector();
+    this.prevAngle = this.movementVector.angle;
+
+    this.changeAngle = function(delta) {
+
+        this.movementVector.angle += delta;
+
+        this.rotate_centroid(-this.prevAngle);
+        this.rotate_centroid(this.movementVector.angle);
+        this.prevAngle = this.movementVector.angle;
+    }
+
+    this.getNextPos = function() {
+
+        return this.get_centroid() + this.movementVector;
+    }
+}
+
+Boid.prototype = Object.create(Path.Triangle.prototype);
+Boid.prototype.constructor = Boid;
+
 ////////////////////////////////////////////////////////////
 
-var boid = new Path.Triangle(
+var boid = new Boid(
     new Point(0, 60),
     new Point(8, 30),
-    new Point(16, 60)
-)
-boid.strokeColor = 'white';
-boid.scaling *= 1;
+    new Point(16, 60),
+    'white', 1, 1
+);
 boid.move_to(view.center);
 
 // aligning boid along X axys (0 degrees)
-boid.rotate_centroid(90);
+//boid.rotate_centroid(90);
 
 // dependency injection point
 // wrapper-function for decision making (DM)
@@ -66,34 +141,6 @@ var drawCircle = function(center, radius, color) {
 
 var sc = drawCircle(view.center, 2, 'red');
 
-var createJumper = function(speed) {
-
-    var destination = getDecision("").dest;
-    var vector = destination - boid.position;
-
-    // saving current angle in order to return it back to 0 degree by rotating boid back later
-    var prevMovementVectorAngle = -vector.angle;
-    boid.rotate(vector.angle);
-
-    return {
-        execute: function (event) {
-
-            //boid.position += vector / 30;
-            vector.length = speed; 
-            boid.position += vector;
-            vector = destination - boid.position;    
-            
-            if (vector.length < 1) {
-                destination = getDecision("").dest;
-                vector = destination - boid.position;
-                boid.rotate(prevMovementVectorAngle);
-                boid.rotate(vector.angle);
-                prevMovementVectorAngle = -vector.angle;
-            }
-        }
-    }
-}
-
 
 var createWanderer = function(speed) {
 
@@ -101,13 +148,13 @@ var createWanderer = function(speed) {
     var directionChangingTime = Date.now() + decision.interval;
 
     // movementVector represents movement direction (angle) and speed (length)
-    var movementVector = boid.get_vector_to(decision.dest);
-    movementVector.length = speed;
-    boid.rotate_centroid(movementVector.angle);
+    // var movementVector = boid.get_vector_to(decision.dest);
+    // movementVector.length = speed;
+    // boid.rotate_centroid(movementVector.angle);
 
 
     // saving current angle in order to return it back to 0 degree by rotating boid back later
-    var prevMovementVectorAngle = movementVector.angle;
+    // var prevMovementVectorAngle = movementVector.angle;
     
 
     return {
@@ -115,17 +162,20 @@ var createWanderer = function(speed) {
             
             // is it time to change direction?
             if (Date.now() >= directionChangingTime) {
-                movementVector.angle += decision.degree;
+                //movementVector.angle += decision.degree;
+                boid.changeAngle(decision.degree);
                 decision = getDecision("");
                 directionChangingTime = Date.now() + decision.interval;
 
                 // rotating boid "back" to 0 degrees
-                boid.rotate_centroid(-prevMovementVectorAngle);
-                boid.rotate_centroid(movementVector.angle);
-                prevMovementVectorAngle = movementVector.angle;
+                // boid.rotate_centroid(-prevMovementVectorAngle);
+                // boid.rotate_centroid(movementVector.angle);
+                // prevMovementVectorAngle = movementVector.angle;
             }
 
-            var nextPos = boid.get_centroid() + movementVector;
+            //var nextPos = boid.get_centroid() + movementVector;
+            var nextPos = boid.getNextPos();
+            //console.log(nextPos);
 
 
             // jumping t0 the "other side" of the screen

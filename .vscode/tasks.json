@@ -12,7 +12,7 @@
         {
             "label": "debuK",
             "type": "shell",
-            "command": "http-server 'C:\\Users\\andre\\Documents\\VSCode\\Projects\\bots'",
+            "command": "http-server 'C:\\Users\\andre\\Documents\\VSCode\\Projects\\bots' -a 127.0.0.1 -p 8080",
             "isBackground": true,
             "problemMatcher": []
         }
