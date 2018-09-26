@@ -98,16 +98,17 @@ var createJumper = function(speed) {
 var createWanderer = function(speed) {
 
     var decision = getDecision("");
+    var directionChangingTime = Date.now() + decision.interval;
 
     // movementVector represents movement direction (angle) and speed (length)
     var movementVector = boid.get_vector_to(decision.dest);
     movementVector.length = speed;
+    boid.rotate_centroid(movementVector.angle);
 
-    var directionChangingTime = Date.now() + decision.interval;
 
     // saving current angle in order to return it back to 0 degree by rotating boid back later
     var prevMovementVectorAngle = movementVector.angle;
-    boid.rotate_centroid(movementVector.angle);
+    
 
     return {
         execute: function onFrame(event) {
