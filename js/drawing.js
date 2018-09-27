@@ -22,16 +22,6 @@ Path.Triangle = function Triangle(p1, p2, p3) {
     this.rotate_centroid = function(angle) {
         this.rotate(angle, this.get_centroid());
     }
-/*
-    this.rotate_towards = function(point) {
-
-        var movementVector = this.get_vector_to(point);
-        //movementVector.length = speed;
-        this.rotate_centroid(movementVector.angle);
-
-        return movementVector;
-    }
-*/
 }
 
 Path.Triangle.prototype = Object.create(Path.prototype);
@@ -47,48 +37,27 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed) {
 
     this.strokeColor = color;
 
-    var getMovementVector = function() {
+    var getMovementVector = function(v1, v2, v3, headPos, speed, center) {
 
-        var vertices = [p1, p2, p3];
-        var head = vertices.splice(headIndex, 1);
-
-        var x0, y0, x1, x2, y1, y2;
+        var vertices = [v1, v2, v3];
+        var head = vertices.splice(headPos, 1);
     
-        if (vertices[0].x > vertices[1].x) {
-            x1 = vertices[0].x;
-            x2 = vertices[1].x; 
-        }
-        else {
-            x1 = vertices[1].x;
-            x2 = vertices[0].x; 
-        }
-    
-        if (vertices[0].y > vertices[1].y) {
-            y1 = vertices[0].y;
-            y2 = vertices[1].y; 
-        }
-        else {
-            y1 = vertices[1].y;
-            y2 = vertices[0].y; 
-        }
-    
-        x0 = x1 + (x2 - x1) / 2;
-        y0 = y1 + (y2 - y1) / 2;
-    
-        var mv = head[0] - new Point(x0, y0);
-        mv.length = initSpeed;
+        var mv = head[0] - center;
+        mv.length = speed;
 
         return mv;
-        //this.prevAngle = movementVector.angle;
     }
 
-    this.movementVector = getMovementVector();
+    // movementVector represents movement direction (angle) and speed (length)
+    this.movementVector = getMovementVector(p1, p2, p2, headIndex, initSpeed, this.get_centroid());
+    // saving current angle in order to return it back to 0 degree by rotating boid back later
     this.prevAngle = this.movementVector.angle;
 
     this.changeAngle = function(delta) {
 
         this.movementVector.angle += delta;
 
+        // rotating boid "back" to 0 degrees
         this.rotate_centroid(-this.prevAngle);
         this.rotate_centroid(this.movementVector.angle);
         this.prevAngle = this.movementVector.angle;
@@ -112,9 +81,6 @@ var boid = new Boid(
     'white', 1, 1
 );
 boid.move_to(view.center);
-
-// aligning boid along X axys (0 degrees)
-//boid.rotate_centroid(90);
 
 // dependency injection point
 // wrapper-function for decision making (DM)
@@ -147,40 +113,23 @@ var createWanderer = function(speed) {
     var decision = getDecision("");
     var directionChangingTime = Date.now() + decision.interval;
 
-    // movementVector represents movement direction (angle) and speed (length)
-    // var movementVector = boid.get_vector_to(decision.dest);
-    // movementVector.length = speed;
-    // boid.rotate_centroid(movementVector.angle);
-
-
-    // saving current angle in order to return it back to 0 degree by rotating boid back later
-    // var prevMovementVectorAngle = movementVector.angle;
-    
-
     return {
         execute: function onFrame(event) {
             
             // is it time to change direction?
             if (Date.now() >= directionChangingTime) {
-                //movementVector.angle += decision.degree;
+
                 boid.changeAngle(decision.degree);
                 decision = getDecision("");
                 directionChangingTime = Date.now() + decision.interval;
-
-                // rotating boid "back" to 0 degrees
-                // boid.rotate_centroid(-prevMovementVectorAngle);
-                // boid.rotate_centroid(movementVector.angle);
-                // prevMovementVectorAngle = movementVector.angle;
             }
 
-            //var nextPos = boid.get_centroid() + movementVector;
             var nextPos = boid.getNextPos();
-            //console.log(nextPos);
-
 
             // jumping t0 the "other side" of the screen
             var jumpPos;
 
+            // you can send boundaries to the boid as a context...
             if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
             else if (nextPos.x >= view.size.width) jumpPos = new Point(0, nextPos.y);
             else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, view.size.height);
@@ -192,7 +141,6 @@ var createWanderer = function(speed) {
     }
 }
 
-//var action = createJumper(1);
 var action = createWanderer(1);
 
 function onFrame(event) {
