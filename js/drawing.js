@@ -29,7 +29,7 @@ Path.Triangle.prototype.constructor = Path.Triangle;
 
 ///////////////////////// Boid /////////////////////////////
 
-Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed) {
+Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
     
     // if headIndex > 2 and headIndex < 0 throw exeption!
 
@@ -67,6 +67,43 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed) {
 
         return this.get_centroid() + this.movementVector;
     }
+
+    this.move = function() {
+
+        var cn = {
+            boid: this,
+            area: view
+        };
+
+        action(cn, function(decision) {
+
+            var boid = decision.boid;
+            var area = decision.area;
+
+            if (decision.changed) {
+
+                console.log("changed");
+                boid.changeAngle(decision.degree);
+            }
+
+            //console.log("action");
+
+            var nextPos = boid.getNextPos();
+
+            // jumping t0 the "other side" of the screen
+            var jumpPos;
+
+            // you can send boundaries to the boid as a context...
+            if (nextPos.x <= 0) jumpPos = new Point(area.size.width, nextPos.y);
+            else if (nextPos.x >= area.size.width) jumpPos = new Point(0, nextPos.y);
+            else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, area.size.height);
+            else if (nextPos.y >= area.size.height) jumpPos = new Point(nextPos.x, 0);
+            else jumpPos = nextPos;
+
+            boid.move_to(jumpPos);
+
+        });
+    }
 }
 
 Boid.prototype = Object.create(Path.Triangle.prototype);
@@ -78,24 +115,9 @@ var boid = new Boid(
     new Point(0, 60),
     new Point(8, 30),
     new Point(16, 60),
-    'white', 1, 1
+    'white', 1, 1, dm2.map
 );
 boid.move_to(view.center);
-
-// dependency injection point
-// wrapper-function for decision making (DM)
-// it hides DM implementation details from the code below
-var getDecision = function(context)
-{
-    return dm.map(context, function(dest)
-    {
-        return {
-            dest: new Point(dest.x, dest.y) * view.size,
-            interval: dest.interval,
-            degree: dest.degree,
-        }
-    });
-};
 
 var drawCircle = function(center, radius, color) {
 	
@@ -110,33 +132,10 @@ var sc = drawCircle(view.center, 2, 'red');
 
 var createWanderer = function(speed) {
 
-    var decision = getDecision("");
-    var directionChangingTime = Date.now() + decision.interval;
-
     return {
         execute: function onFrame(event) {
             
-            // is it time to change direction?
-            if (Date.now() >= directionChangingTime) {
-
-                boid.changeAngle(decision.degree);
-                decision = getDecision("");
-                directionChangingTime = Date.now() + decision.interval;
-            }
-
-            var nextPos = boid.getNextPos();
-
-            // jumping t0 the "other side" of the screen
-            var jumpPos;
-
-            // you can send boundaries to the boid as a context...
-            if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
-            else if (nextPos.x >= view.size.width) jumpPos = new Point(0, nextPos.y);
-            else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, view.size.height);
-            else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
-            else jumpPos = nextPos;
-
-            boid.move_to(jumpPos);
+            boid.move();
         }
     }
 }
