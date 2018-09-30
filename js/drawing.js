@@ -37,7 +37,8 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
 
     this.strokeColor = color;
 
-    var getMovementVector = function(v1, v2, v3, headPos, speed, center) {
+    // movementVector represents movement direction (angle) and speed (length)
+    this.movementVector = (function(v1, v2, v3, headPos, speed, center) {
 
         var vertices = [v1, v2, v3];
         var head = vertices.splice(headPos, 1);
@@ -46,22 +47,24 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
         mv.length = speed;
 
         return mv;
-    }
+    })(p1, p2, p2, headIndex, initSpeed, this.get_centroid());
 
-    // movementVector represents movement direction (angle) and speed (length)
-    this.movementVector = getMovementVector(p1, p2, p2, headIndex, initSpeed, this.get_centroid());
-    // saving current angle in order to return it back to 0 degree by rotating boid back later
-    this.prevAngle = this.movementVector.angle;
 
-    this.changeAngle = function(delta) {
+    this.changeAngle = (function() {
 
-        this.movementVector.angle += delta;
+        // saving current angle in order to return it back to 0 degree by rotating boid back later
+        var prevAngle = this.movementVector.angle;
 
-        // rotating boid "back" to 0 degrees
-        this.rotate_centroid(-this.prevAngle);
-        this.rotate_centroid(this.movementVector.angle);
-        this.prevAngle = this.movementVector.angle;
-    }
+        return function (delta) {
+
+            this.movementVector.angle += delta;
+
+            // rotating boid "back" to 0 degrees
+            this.rotate_centroid(-prevAngle);
+            this.rotate_centroid(this.movementVector.angle);
+            prevAngle = this.movementVector.angle;
+        }
+    }.bind(this))();
 
     this.getNextPos = function() {
 
@@ -70,20 +73,17 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
 
     this.move = function() {
 
-        // pushing [this] to the callback below
-        var boid = this;
-
         action(function(decision) {
 
             if (decision.changed) {
 
-                console.log("changed");
-                boid.changeAngle(decision.degree);
+                console.log("angle changed on " + decision.degree);
+                this.changeAngle(decision.degree);
             }
 
             //console.log("action");
 
-            var nextPos = boid.getNextPos();
+            var nextPos = this.getNextPos();
 
             // jumping t0 the "other side" of the screen
             var jumpPos;
@@ -95,9 +95,10 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
             else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
             else jumpPos = nextPos;
 
-            boid.move_to(jumpPos);
+            this.move_to(jumpPos);
 
-        });
+        // creating a copy with [this]
+        }.bind(this));
     }
 }
 
@@ -114,30 +115,10 @@ var boid = new Boid(
 );
 boid.move_to(view.center);
 
-var drawCircle = function(center, radius, color) {
-	
-	var dest = new Path.Circle(center, radius);
-	dest.fillColor = color;
 
-	return dest;
-};
-
-var sc = drawCircle(view.center, 2, 'red');
-
-
-var createWanderer = function(speed) {
-
-    return {
-        execute: function onFrame(event) {
-            
-            boid.move();
-        }
-    }
-}
-
-var action = createWanderer(1);
+new Path.Circle(view.center, 2).fillColor = 'red';
 
 function onFrame(event) {
 
-    action.execute(event);
+    boid.move();
 }

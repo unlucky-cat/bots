@@ -50,3 +50,19 @@ var dm2 = (function() {
     }
 
 })();
+
+
+var x = (function() {
+
+    var f = function () {
+        return 2 + Math.random() * 3; 
+    }
+
+    this.init = f();
+
+    return {
+        y: function() {
+            console.log(init++)
+        }
+    }
+})();
