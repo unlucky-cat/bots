@@ -28,7 +28,7 @@ var dm2 = (function() {
     var initTime = getRandomInterval(Date.now());
 
     return {
-        map: function(context, callback)
+        map: function(callback)
         {
             var isActionTime = false;
 
@@ -41,9 +41,7 @@ var dm2 = (function() {
             var dest = {
                 changed: isActionTime,
                 // +- 5 degrees
-                degree: isActionTime ? Math.random() * 10 - 5 : 0,
-                boid: context.boid,
-                area: context.area
+                degree: isActionTime ? Math.random() * 10 - 5 : 0
             };
 
             // console.log(context);

@@ -70,15 +70,10 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
 
     this.move = function() {
 
-        var cn = {
-            boid: this,
-            area: view
-        };
+        // pushing [this] to the callback below
+        var boid = this;
 
-        action(cn, function(decision) {
-
-            var boid = decision.boid;
-            var area = decision.area;
+        action(function(decision) {
 
             if (decision.changed) {
 
@@ -94,10 +89,10 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
             var jumpPos;
 
             // you can send boundaries to the boid as a context...
-            if (nextPos.x <= 0) jumpPos = new Point(area.size.width, nextPos.y);
-            else if (nextPos.x >= area.size.width) jumpPos = new Point(0, nextPos.y);
-            else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, area.size.height);
-            else if (nextPos.y >= area.size.height) jumpPos = new Point(nextPos.x, 0);
+            if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
+            else if (nextPos.x >= view.size.width) jumpPos = new Point(0, nextPos.y);
+            else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, view.size.height);
+            else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
             else jumpPos = nextPos;
 
             boid.move_to(jumpPos);
