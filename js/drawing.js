@@ -29,13 +29,14 @@ Path.Triangle.prototype.constructor = Path.Triangle;
 
 ///////////////////////// Boid /////////////////////////////
 
-Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
+Boid = function Boid(p1, p2, p3, color, name, headIndex, initSpeed, action) {
     
     // if headIndex > 2 and headIndex < 0 throw exeption!
 
     Path.Triangle.call(this, p1, p2, p3);
 
     this.strokeColor = color;
+    this.name = name;
 
     // movementVector represents movement direction (angle) and speed (length)
     this.movementVector = (function(v1, v2, v3, headPos, speed, center) {
@@ -77,7 +78,7 @@ Boid = function Boid(p1, p2, p3, color, headIndex, initSpeed, action) {
 
             if (decision.changed) {
 
-                console.log("angle changed on " + decision.degree);
+                console.log(this.name + " - angle changed on " + decision.degree);
                 this.changeAngle(decision.degree);
             }
 
@@ -107,18 +108,45 @@ Boid.prototype.constructor = Boid;
 
 ////////////////////////////////////////////////////////////
 
-var boid = new Boid(
+var flock = [];
+flock.push(new Boid(
     new Point(0, 60),
     new Point(8, 30),
     new Point(16, 60),
-    'white', 1, 1, dm2.map
-);
-boid.move_to(view.center);
+    'white', 'boid1', 1, 1, dm2().map
+));
+flock.push(new Boid(
+    new Point(0, 60),
+    new Point(8, 30),
+    new Point(16, 60),
+    'red', 'boid2', 1, 1, dm2().map
+));
+flock.push(new Boid(
+    new Point(0, 60),
+    new Point(8, 30),
+    new Point(16, 60),
+    'lime', 'boid3', 1, 1, dm2().map
+));
+flock.push(new Boid(
+    new Point(0, 60),
+    new Point(8, 30),
+    new Point(16, 60),
+    'blue', 'boid4', 1, 1, dm2().map
+));
+flock.push(new Boid(
+    new Point(0, 60),
+    new Point(8, 30),
+    new Point(16, 60),
+    'yellow', 'boid5', 1, 1, dm2().map
+));
 
+flock.forEach(function(boid) { boid.move_to(view.center); })
 
 new Path.Circle(view.center, 2).fillColor = 'red';
 
 function onFrame(event) {
 
-    boid.move();
+    flock.forEach(function(boid) {
+        boid.move();
+    });
 }

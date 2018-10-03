@@ -17,7 +17,7 @@ var dm = (function() {
 
 })();
 
-var dm2 = (function() {
+var dm2 = function() {
 
     // from 500 to 2000 millis
     var getRandomInterval = function(base) {
@@ -49,7 +49,7 @@ var dm2 = (function() {
         }
     }
 
-})();
+};
 
 
 var x = (function() {
