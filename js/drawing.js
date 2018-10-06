@@ -72,81 +72,63 @@ Boid = function Boid(p1, p2, p3, color, name, headIndex, initSpeed, action) {
         return this.get_centroid() + this.movementVector;
     }
 
+    var calcJumpPoint = function(nextPos) {
+
+        // jumping t0 the "other side" of the screen
+        var jumpPos;
+
+        // you can send boundaries to the boid as a context...
+        if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
+        else if (nextPos.x >= view.size.width) jumpPos = new Point(0, nextPos.y);
+        else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, view.size.height);
+        else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
+        else jumpPos = nextPos;
+
+        return jumpPos;
+    }
+
     this.move = function() {
 
         action(function(decision) {
 
             if (decision.changed) {
 
-                console.log(this.name + " - angle changed on " + decision.degree);
+                //console.log(this.name + "'s - angle changed on " + decision.degree);
                 this.changeAngle(decision.degree);
             }
 
-            //console.log("action");
+            this.move_to(calcJumpPoint(this.getNextPos()));
 
-            var nextPos = this.getNextPos();
-
-            // jumping t0 the "other side" of the screen
-            var jumpPos;
-
-            // you can send boundaries to the boid as a context...
-            if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
-            else if (nextPos.x >= view.size.width) jumpPos = new Point(0, nextPos.y);
-            else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, view.size.height);
-            else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
-            else jumpPos = nextPos;
-
-            this.move_to(jumpPos);
-
-        // creating a copy with [this]
         }.bind(this));
+    }
+
+    this.addToFlock = function() {
+        this.flock.push(this);
+
+        return this;
     }
 }
 
 Boid.prototype = Object.create(Path.Triangle.prototype);
 Boid.prototype.constructor = Boid;
+Boid.prototype.flock = [];
 
 ////////////////////////////////////////////////////////////
 
-var flock = [];
-flock.push(new Boid(
-    new Point(0, 60),
-    new Point(8, 30),
-    new Point(16, 60),
-    'white', 'boid1', 1, 1, dm2().map
-));
-flock.push(new Boid(
-    new Point(0, 60),
-    new Point(8, 30),
-    new Point(16, 60),
-    'red', 'boid2', 1, 1, dm2().map
-));
-flock.push(new Boid(
-    new Point(0, 60),
-    new Point(8, 30),
-    new Point(16, 60),
-    'lime', 'boid3', 1, 1, dm2().map
-));
-flock.push(new Boid(
-    new Point(0, 60),
-    new Point(8, 30),
-    new Point(16, 60),
-    'blue', 'boid4', 1, 1, dm2().map
-));
-flock.push(new Boid(
-    new Point(0, 60),
-    new Point(8, 30),
-    new Point(16, 60),
-    'yellow', 'boid5', 1, 1, dm2().map
-));
+//var flock = [];
+new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'white', 'boid1', 1, 1, dm2().map).addToFlock();
+new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'red', 'boid2', 1, 1, dm2().map).addToFlock();
+new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'lime', 'boid3', 1, 1, dm2().map).addToFlock();
+new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'blue', 'boid4', 1, 1, dm2().map).addToFlock();
+new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'yellow', 'boid5', 1, 1, dm2().map).addToFlock();
 
-flock.forEach(function(boid) { boid.move_to(view.center); })
+Boid.prototype.flock.forEach(function(boid) { boid.move_to(view.center); })
 
 new Path.Circle(view.center, 2).fillColor = 'red';
 
 function onFrame(event) {
 
-    flock.forEach(function(boid) {
+    Boid.prototype.flock.forEach(function(boid) {
         boid.move();
     });
 }
