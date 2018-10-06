@@ -29,9 +29,13 @@ Path.Triangle.prototype.constructor = Path.Triangle;
 
 ///////////////////////// Boid /////////////////////////////
 
-Boid = function Boid(p1, p2, p3, color, name, headIndex, initSpeed, action) {
+Boid = function Boid(color, name, headIndex, initSpeed, action) {
     
     // if headIndex > 2 and headIndex < 0 throw exeption!
+
+    var p1 = new Point(0, 60);
+    var p2 = new Point(8, 30);
+    var p3 = new Point(16, 60);
 
     Path.Triangle.call(this, p1, p2, p3);
 
@@ -116,11 +120,11 @@ Boid.prototype.flock = [];
 ////////////////////////////////////////////////////////////
 
 //var flock = [];
-new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'white', 'boid1', 1, 1, dm2().map).addToFlock();
-new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'red', 'boid2', 1, 1, dm2().map).addToFlock();
-new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'lime', 'boid3', 1, 1, dm2().map).addToFlock();
-new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'blue', 'boid4', 1, 1, dm2().map).addToFlock();
-new Boid( new Point(0, 60), new Point(8, 30), new Point(16, 60), 'yellow', 'boid5', 1, 1, dm2().map).addToFlock();
+new Boid('white', 'boid1', 1, 1, dm2().map).addToFlock();
+new Boid('red', 'boid2', 1, 1, dm2().map).addToFlock();
+new Boid('lime', 'boid3', 1, 1, dm2().map).addToFlock();
+new Boid('blue', 'boid4', 1, 1, dm2().map).addToFlock();
+new Boid('yellow', 'boid5', 1, 1, dm2().map).addToFlock();
 
 Boid.prototype.flock.forEach(function(boid) { boid.move_to(view.center); })
 
