@@ -29,7 +29,7 @@ Path.Triangle.prototype.constructor = Path.Triangle;
 
 ///////////////////////// Boid /////////////////////////////
 
-Boid = function Boid(color, name, headIndex, initSpeed, action) {
+Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action) {
     
     // if headIndex > 2 and headIndex < 0 throw exeption!
 
@@ -91,6 +91,25 @@ Boid = function Boid(color, name, headIndex, initSpeed, action) {
         return jumpPos;
     }
 
+    var getAttractionForces = function() {
+
+        this.flock.forEach(function (boid) {
+            
+            var centroid = this.get_centroid();
+            var distanceVector = centroid - boid.get_centroid();
+            var attractionVector = new Point();
+            attractionVector.x = centroid.x;
+            attractionVector.y = centroid.y;
+            attractionVector.angle = -distanceVector.angle;
+            attractionVector.length = 200 - distanceVector.length;
+
+        })
+    }
+
+    var getRepulsionForces = function() {
+
+    }
+
     this.move = function() {
 
         action(function(decision) {
@@ -111,6 +130,9 @@ Boid = function Boid(color, name, headIndex, initSpeed, action) {
 
         return this;
     }
+
+    this.move_to(position);
+    this.changeAngle(angle);
 }
 
 Boid.prototype = Object.create(Path.Triangle.prototype);
@@ -119,14 +141,21 @@ Boid.prototype.flock = [];
 
 ////////////////////////////////////////////////////////////
 
-//var flock = [];
-new Boid('white', 'boid1', 1, 1, dm2().map).addToFlock();
-new Boid('red', 'boid2', 1, 1, dm2().map).addToFlock();
-new Boid('lime', 'boid3', 1, 1, dm2().map).addToFlock();
-new Boid('blue', 'boid4', 1, 1, dm2().map).addToFlock();
-new Boid('yellow', 'boid5', 1, 1, dm2().map).addToFlock();
+var getRandomPoint = function() {
+    return Point.random() * view.size;
+}
 
-Boid.prototype.flock.forEach(function(boid) { boid.move_to(view.center); })
+var getRandomAngle = function() {
+    return -180 + Math.random() * 180;
+}
+
+new Boid('white', 'boid1', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
+new Boid('red', 'boid2', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
+new Boid('lime', 'boid3', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
+new Boid('blue', 'boid4', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
+new Boid('yellow', 'boid5', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
+
+// Boid.prototype.flock.forEach(function(boid) { boid.move_to(view.center); })
 
 new Path.Circle(view.center, 2).fillColor = 'red';
 
