@@ -33,6 +33,7 @@ var getAttractionForces = function(init_force, boid, flock, distanceToScan) {
     .reduce(function (accumulativeVector, flock_centroid) {
         
         var distanceVector = centroid - flock_centroid;
+        distanceVector.length = distanceToScan - distanceVector.length;
 
         drawVectorFromPoint(flock_centroid, centroid, 'yellow');      
 
@@ -45,12 +46,12 @@ var b1 = new Boid('white', 'boid1', getRandomPoint(), getRandomAngle(), 1, 1, dm
 var b2 = new Boid('red', 'boid2', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map);
 var b3 = new Boid('lime', 'boid3', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map);
 
-var radius = 200;
+var radius = 100;
 var f = [b2, b3];
 var start_force = new Point(0, 0);
 var v1 = getAttractionForces(start_force, b1, f, radius);
 
-new Path.Circle(b1.get_centroid(), radius).strokeColor = 'yellow';
+//new Path.Circle(b1.get_centroid(), radius).strokeColor = 'yellow';
 
 drawVectorFromPoint(b1.get_centroid(), b1.get_centroid() + v1, 'white');
 

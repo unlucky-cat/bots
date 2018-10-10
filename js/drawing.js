@@ -4,6 +4,8 @@ Path.Triangle = function Triangle(p1, p2, p3) {
     Path.call(this, [p1, p2, p3]);
     this.closed = true;
 
+    this.onMove = [];
+
     this.get_centroid = function() {
         var x = this.segments.reduce(function(acc, curr) { return acc + curr.point.x; }, 0);
         var y = this.segments.reduce(function(acc, curr) { return acc + curr.point.y; }, 0);
@@ -17,6 +19,10 @@ Path.Triangle = function Triangle(p1, p2, p3) {
 
     this.move_to = function(point) {
         this.position += this.get_vector_to(point);
+
+        this.onMove.forEach(function(func) {
+            func(this.position);
+        }.bind(this));
     }
 
     this.rotate_centroid = function(angle) {
@@ -38,6 +44,15 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     var p3 = new Point(16, 60);
 
     Path.Triangle.call(this, p1, p2, p3);
+
+    var circle = new Path.Circle(this.get_centroid(), 100);
+    circle.strokeColor = color;
+    circle.strokeWidth = .5;
+    circle.dashArray = [3, 20];
+    this.onMove.push(function(pos) {
+        circle.position = pos;
+        console.log(pos);
+    });
 
     this.strokeColor = color;
     this.name = name;
