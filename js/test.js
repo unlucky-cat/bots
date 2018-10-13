@@ -13,7 +13,7 @@ var getRandomAngle = function() {
     return -180 + Math.random() * 180;
 }
 
-var getAttractionForces = function(init_force, boid, flock, distanceToScan) {
+var getAttractionForces2 = function(init_force, boid, flock, distanceToScan) {
 
     var centroid = boid.get_centroid();
     var name = boid.name;
@@ -49,7 +49,7 @@ var b3 = new Boid('lime', 'boid3', getRandomPoint(), getRandomAngle(), 1, 1, dm2
 var radius = 100;
 var f = [b2, b3];
 var start_force = new Point(0, 0);
-var v1 = getAttractionForces(start_force, b1, f, radius);
+var v1 = getAttractionForces2(start_force, b1, f, radius);
 
 //new Path.Circle(b1.get_centroid(), radius).strokeColor = 'yellow';
 

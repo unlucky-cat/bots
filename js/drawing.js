@@ -21,7 +21,7 @@ Path.Triangle = function Triangle(p1, p2, p3) {
         this.position += this.get_vector_to(point);
 
         this.onMove.forEach(function(func) {
-            func(this.position);
+            func(this.get_centroid());
         }.bind(this));
     }
 
@@ -44,14 +44,23 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     var p3 = new Point(16, 60);
 
     Path.Triangle.call(this, p1, p2, p3);
+    this.distanceToScan = 100;
 
     var circle = new Path.Circle(this.get_centroid(), 100);
     circle.strokeColor = color;
     circle.strokeWidth = .5;
     circle.dashArray = [3, 20];
+
+    var center = new Path.Circle(this.get_centroid(), 2);
+    center.strokeColor = color;
+
+    var lines = [];
+    
     this.onMove.push(function(pos) {
         circle.position = pos;
-        console.log(pos);
+        center.position = pos;
+
+        //console.log(pos);
     });
 
     this.strokeColor = color;
@@ -106,19 +115,43 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         return jumpPos;
     }
 
-    var getAttractionForces = function() {
+    this.getAttractionForces = function() {
 
-        this.flock.forEach(function (boid) {
-            
-            var centroid = this.get_centroid();
-            var distanceVector = centroid - boid.get_centroid();
-            var attractionVector = new Point();
-            attractionVector.x = centroid.x;
-            attractionVector.y = centroid.y;
-            attractionVector.angle = -distanceVector.angle;
-            attractionVector.length = 200 - distanceVector.length;
+        var centroid = this.get_centroid();
+        var name = this.name;
+        var init_force = new Point(0, 0); //this.movementVector;
+        var scanDistance = this.distanceToScan;
 
+        lines.forEach(function (l) {
+            l.remove();
+        });
+        lines.length = 0;
+    
+        return this.flock
+        .filter(function (flock_boid) {
+            return name !== flock_boid.name;
         })
+        .map(function (flock_boid) {
+            return flock_boid.get_centroid();
+        })
+        .filter(function(flock_centroid) {
+            var distanceVector = centroid - flock_centroid;
+    
+            return distanceVector.length > 0 && distanceVector.length <= scanDistance;
+        })
+        .reduce(function (accumulativeVector, flock_centroid) {
+            
+            var distanceVector = centroid - flock_centroid;
+            distanceVector.length = scanDistance - distanceVector.length;
+    
+            //drawVectorFromPoint(flock_centroid, centroid, 'yellow');   
+            var ln = new Path.Line(flock_centroid, centroid);
+            ln.strokeColor = color;
+            lines.push(ln);
+            //new Path.Circle(vector, 2).strokeColor = color;   
+    
+            return accumulativeVector + distanceVector;
+        }, init_force);
     }
 
     var getRepulsionForces = function() {
@@ -135,6 +168,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
                 this.changeAngle(decision.degree);
             }
 
+            var correction = this.getAttractionForces();
             this.move_to(calcJumpPoint(this.getNextPos()));
 
         }.bind(this));
