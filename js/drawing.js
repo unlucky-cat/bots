@@ -84,9 +84,10 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         // saving current angle in order to return it back to 0 degree by rotating boid back later
         var prevAngle = this.movementVector.angle;
 
-        return function (delta) {
+        return function (value, isDelta) {
 
-            this.movementVector.angle += delta;
+            if (isDelta === true) this.movementVector.angle += value;
+            else this.movementVector.angle = value;
 
             // rotating boid "back" to 0 degrees
             this.rotate_centroid(-prevAngle);
@@ -147,6 +148,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             //drawVectorFromPoint(flock_centroid, centroid, 'yellow');   
             var ln = new Path.Line(flock_centroid, centroid);
             ln.strokeColor = color;
+            ln.strokeWidth = 0.3;
             lines.push(ln);
             //new Path.Circle(vector, 2).strokeColor = color;   
     
@@ -165,10 +167,22 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             if (decision.changed) {
 
                 //console.log(this.name + "'s - angle changed on " + decision.degree);
-                this.changeAngle(decision.degree);
+                this.changeAngle(decision.degree, true);
             }
 
             var correction = this.getAttractionForces();
+            correction /= 1000;
+/*
+            var ln = new Path.Line(this.get_centroid(), this.get_centroid() + correction);
+            ln.strokeColor = color;
+            ln.strokeWidth = 2;
+            lines.push(ln);
+*/
+            // i should ONLY correct the movement ANGLE, but not it's length (speed)
+            correctionAngle = (this.movementVector + correction).angle;
+
+            this.changeAngle(correctionAngle, false);
+
             this.move_to(calcJumpPoint(this.getNextPos()));
 
         }.bind(this));
@@ -181,7 +195,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     }
 
     this.move_to(position);
-    this.changeAngle(angle);
+    this.changeAngle(angle, false);
 }
 
 Boid.prototype = Object.create(Path.Triangle.prototype);
@@ -198,11 +212,12 @@ var getRandomAngle = function() {
     return -180 + Math.random() * 180;
 }
 
-new Boid('white', 'boid1', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
-new Boid('red', 'boid2', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
-new Boid('lime', 'boid3', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
-new Boid('blue', 'boid4', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
-new Boid('yellow', 'boid5', getRandomPoint(), getRandomAngle(), 1, 1, dm2().map).addToFlock();
+var speed = 1;
+new Boid('white', 'boid1', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('red', 'boid2', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('lime', 'boid3', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('blue', 'boid4', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('yellow', 'boid5', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 
 // Boid.prototype.flock.forEach(function(boid) { boid.move_to(view.center); })
 
