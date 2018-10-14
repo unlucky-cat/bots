@@ -44,20 +44,20 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     var p3 = new Point(16, 60);
 
     Path.Triangle.call(this, p1, p2, p3);
-    this.distanceToScan = 100;
-
-    var circle = new Path.Circle(this.get_centroid(), 100);
+    var distanceToScan = 120;
+/*
+    var circle = new Path.Circle(this.get_centroid(), distanceToScan);
     circle.strokeColor = color;
     circle.strokeWidth = .5;
     circle.dashArray = [3, 20];
-
+*/
     var center = new Path.Circle(this.get_centroid(), 2);
     center.strokeColor = color;
 
     var lines = [];
     
     this.onMove.push(function(pos) {
-        circle.position = pos;
+        //circle.position = pos;
         center.position = pos;
 
         //console.log(pos);
@@ -121,7 +121,8 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         var centroid = this.get_centroid();
         var name = this.name;
         var init_force = new Point(0, 0); //this.movementVector;
-        var scanDistance = this.distanceToScan;
+        var scanDistance = distanceToScan;
+        var movementDirection = this.movementVector;
 
         lines.forEach(function (l) {
             l.remove();
@@ -137,8 +138,13 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         })
         .filter(function(flock_centroid) {
             var distanceVector = centroid - flock_centroid;
+            var flockMemberDirection = flock_centroid - centroid;
+            var angleBetween = Math.abs(movementDirection.angle - flockMemberDirection.angle);
+            if (angleBetween > 360) angleBetween = 360 - angleBetween;
     
-            return distanceVector.length > 0 && distanceVector.length <= scanDistance;
+            return distanceVector.length > 0 
+                && distanceVector.length <= scanDistance
+                && angleBetween <= 100;
         })
         .reduce(function (accumulativeVector, flock_centroid) {
             
@@ -212,12 +218,19 @@ var getRandomAngle = function() {
     return -180 + Math.random() * 180;
 }
 
-var speed = 1;
+var speed = .6;
 new Boid('white', 'boid1', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 new Boid('red', 'boid2', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 new Boid('lime', 'boid3', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 new Boid('blue', 'boid4', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 new Boid('yellow', 'boid5', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('magenta', 'boid6', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('aqua', 'boid7', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('blueviolet', 'boid8', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('crimson', 'boid9', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('gold', 'boid10', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('orange', 'boid11', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
+new Boid('pink', 'boid12', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 
 // Boid.prototype.flock.forEach(function(boid) { boid.move_to(view.center); })
 
