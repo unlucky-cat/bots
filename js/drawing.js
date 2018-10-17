@@ -45,6 +45,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
 
     Path.Triangle.call(this, p1, p2, p3);
     var distanceToScan = 120;
+    var smootheningFactor = 1500;
 /*
     var circle = new Path.Circle(this.get_centroid(), distanceToScan);
     circle.strokeColor = color;
@@ -116,7 +117,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         return jumpPos;
     }
 
-    this.getAttractionForces = function() {
+    this.getAttractionForces = function(obstacles) {
 
         var centroid = this.get_centroid();
         var name = this.name;
@@ -136,11 +137,12 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .map(function (flock_boid) {
             return flock_boid.get_centroid();
         })
+        .concat(obstacles)
         .filter(function(flock_centroid) {
             var distanceVector = centroid - flock_centroid;
             var flockMemberDirection = flock_centroid - centroid;
             var angleBetween = Math.abs(movementDirection.angle - flockMemberDirection.angle);
-            if (angleBetween > 360) angleBetween = 360 - angleBetween;
+            if (angleBetween > 180) angleBetween = 180 - angleBetween;
     
             return distanceVector.length > 0 
                 && distanceVector.length <= scanDistance
@@ -166,7 +168,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
 
     }
 
-    this.move = function() {
+    this.move = function(obstacles) {
 
         action(function(decision) {
 
@@ -176,8 +178,8 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
                 this.changeAngle(decision.degree, true);
             }
 
-            var correction = this.getAttractionForces();
-            correction /= 1000;
+            var correction = this.getAttractionForces(obstacles);
+            correction /= smootheningFactor;
 /*
             var ln = new Path.Line(this.get_centroid(), this.get_centroid() + correction);
             ln.strokeColor = color;
@@ -236,9 +238,11 @@ new Boid('pink', 'boid12', getRandomPoint(), getRandomAngle(), 1, speed, dm2().m
 
 new Path.Circle(view.center, 2).fillColor = 'red';
 
+var obstacles = [view.center];
+
 function onFrame(event) {
 
     Boid.prototype.flock.forEach(function(boid) {
-        boid.move();
+        boid.move(obstacles);
     });
 }
