@@ -56,6 +56,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     center.strokeColor = color;
 
     var lines = [];
+    var lines2 = [];
     
     this.onMove.push(function(pos) {
         //circle.position = pos;
@@ -142,15 +143,16 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             var distanceVector = centroid - flock_centroid;
             var flockMemberDirection = flock_centroid - centroid;
             var angleBetween = Math.abs(movementDirection.angle - flockMemberDirection.angle);
-            if (angleBetween > 180) angleBetween = 180 - angleBetween;
+            if (angleBetween > 180) angleBetween = 360 - angleBetween;
     
             return distanceVector.length > 0 
                 && distanceVector.length <= scanDistance
-                && angleBetween <= 100;
+                && angleBetween <= 100; // can be a little behind
         })
         .reduce(function (accumulativeVector, flock_centroid) {
-            
+            // repulsive direction (from flock member)
             var distanceVector = centroid - flock_centroid;
+            // repulsion force is inversely proportional to the distance between objects
             distanceVector.length = scanDistance - distanceVector.length;
     
             //drawVectorFromPoint(flock_centroid, centroid, 'yellow');   
@@ -164,8 +166,63 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         }, init_force);
     }
 
-    var getRepulsionForces = function() {
+    this.getRepulsionForces = function() {
 
+        var centroid = this.get_centroid();
+        var name = this.name;
+        var init_force = new Point(0, 0);
+        var scanDistance = distanceToScan;
+        var movementDirection = this.movementVector;
+    
+        lines2.forEach(function (l) {
+            l.remove();
+        });
+        lines2.length = 0;
+
+        var minVector =  this.flock
+        .filter(function (flock_boid) {
+            return name !== flock_boid.name;
+        })
+        .map(function (flock_boid) {
+            return flock_boid.get_centroid();
+        })
+        .filter(function(flock_centroid) {
+            var distanceVector = centroid - flock_centroid;
+            var flockMemberDirection = flock_centroid - centroid;
+            var angleBetween = Math.abs(movementDirection.angle - flockMemberDirection.angle);
+            if (angleBetween > 180) angleBetween = 360 - angleBetween;
+    
+            return distanceVector.length > 0 
+                && distanceVector.length <= scanDistance
+                && angleBetween <= 60; // should be a little ahead
+        })
+        .reduce(function (accumulativeVector, flock_centroid) {
+            
+            // attractive direction (to flock member)
+            var distanceVector = flock_centroid - centroid;  
+            var minLength = accumulativeVector.length;
+
+            // we need to maximize init_force in order it doesn't win
+            if (accumulativeVector === init_force) minLength = Number.MAX_SAFE_INTEGER;
+
+            return distanceVector.length < minLength ? distanceVector : accumulativeVector;
+
+        }, init_force);
+
+
+        if (minVector !== init_force) {
+            var flock_centroid = centroid + minVector;
+            var ln = new Path.Line(flock_centroid, centroid);
+            ln.strokeColor = color;
+            ln.strokeWidth = 1;
+            ln.dashArray = [3, 10];
+            lines2.push(ln);
+
+            // attraction force is inversely proportional to the distance between objects
+            minVector.length = scanDistance - minVector.length;
+        }
+
+        return minVector;
     }
 
     this.move = function(obstacles) {
@@ -180,6 +237,9 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
 
             var correction = this.getAttractionForces(obstacles);
             correction /= smootheningFactor;
+
+            var correction2 = this.getRepulsionForces();
+            correction2 /= (smootheningFactor-700);
 /*
             var ln = new Path.Line(this.get_centroid(), this.get_centroid() + correction);
             ln.strokeColor = color;
@@ -187,7 +247,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             lines.push(ln);
 */
             // i should ONLY correct the movement ANGLE, but not it's length (speed)
-            correctionAngle = (this.movementVector + correction).angle;
+            correctionAngle = ((this.movementVector + correction) + correction2).angle;
 
             this.changeAngle(correctionAngle, false);
 
