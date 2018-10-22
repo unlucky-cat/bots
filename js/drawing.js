@@ -44,8 +44,10 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     var p3 = new Point(16, 60);
 
     Path.Triangle.call(this, p1, p2, p3);
-    var distanceToScan = 120;
-    var smootheningFactor = 1500;
+    this.distanceToScan = 120;
+    this.smootheningFactor = 1500;
+    this.repulsionAngle = 30;
+    this.attractionAngle = 60;
 /*
     var circle = new Path.Circle(this.get_centroid(), distanceToScan);
     circle.strokeColor = color;
@@ -122,9 +124,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
 
         var centroid = this.get_centroid();
         var name = this.name;
-        var init_force = new Point(0, 0); //this.movementVector;
-        var scanDistance = distanceToScan;
-        var movementDirection = this.movementVector;
+        var init_force = new Point(0, 0);
 
         lines.forEach(function (l) {
             l.remove();
@@ -142,18 +142,18 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .filter(function(flock_centroid) {
 
             var vectorBetween = flock_centroid - centroid;
-            var angleBetween = Math.abs(movementDirection.angle - vectorBetween.angle);
+            var angleBetween = Math.abs(this.movementVector.angle - vectorBetween.angle);
             if (angleBetween > 180) angleBetween = 360 - angleBetween;
     
             return vectorBetween.length > 0 
-                && vectorBetween.length <= scanDistance
-                && angleBetween <= 30; // flock member can be a little behind (/\-shaped field of view)
-        })
+                && vectorBetween.length <= this.distanceToScan
+                && angleBetween <= this.repulsionAngle; // flock member can be a little behind (/\-shaped field of view)
+        }.bind(this))
         .reduce(function (accumulativeVector, flock_centroid) {
             // repulsive direction (from flock member)
             var vectorBetween = centroid - flock_centroid;
             // repulsion force is inversely proportional to the distance between objects
-            vectorBetween.length = scanDistance - vectorBetween.length;
+            vectorBetween.length = this.distanceToScan - vectorBetween.length;
     
             //drawVectorFromPoint(flock_centroid, centroid, 'yellow');   
             var ln = new Path.Line(flock_centroid, centroid);
@@ -163,7 +163,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             //new Path.Circle(vector, 2).strokeColor = color;   
     
             return accumulativeVector + vectorBetween;
-        }, init_force);
+        }.bind(this), init_force);
     }
 
     this.getAttractionForces = function() {
@@ -171,8 +171,6 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         var centroid = this.get_centroid();
         var name = this.name;
         var zero_force = new Point(0, 0);
-        var scanDistance = distanceToScan;
-        var movementDirection = this.movementVector;
     
         lines2.forEach(function (l) {
             l.remove();
@@ -189,14 +187,14 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .filter(function(flock_centroid) {
             
             var vectorBetween = flock_centroid - centroid;
-            var angleBetween = Math.abs(movementDirection.angle - vectorBetween.angle);
+            var angleBetween = Math.abs(this.movementVector.angle - vectorBetween.angle);
             // angle correction
             if (angleBetween > 180) angleBetween = 360 - angleBetween;
     
             return vectorBetween.length > 0 
-                && vectorBetween.length <= scanDistance
-                && angleBetween <= 60; // leader should be a little ahead (v-shaped field of view)
-        })
+                && vectorBetween.length <= this.distanceToScan
+                && angleBetween <= this.attractionAngle; // leader should be a little ahead (v-shaped field of view)
+        }.bind(this))
         // searching for a closest flock member
         .reduce(function (closestMemberVector, flock_centroid) {
             
@@ -222,7 +220,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             lines2.push(ln);
 
             // attraction force is inversely proportional to the distance between objects
-            minVector.length = scanDistance - minVector.length;
+            minVector.length = this.distanceToScan - minVector.length;
         }
 
         return minVector;
@@ -239,15 +237,15 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             }
 
             var repulsion = this.getRepulsionForces(obstacles);
-            repulsion /= smootheningFactor;
+            repulsion /= this.smootheningFactor;
 
             var attraction = this.getAttractionForces();
-            attraction /= (smootheningFactor / 2);
+            attraction /= (this.smootheningFactor / 2);
 
             var totalCorrection = repulsion + attraction;
 
             // i should ONLY correct the movement ANGLE, but not it's length (speed)
-            correctionAngle = (this.movementVector + totalCorrection).angle;
+            var correctionAngle = (this.movementVector + totalCorrection).angle;
 
             this.changeAngle(correctionAngle, false);
 
