@@ -118,7 +118,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         return jumpPos;
     }
 
-    this.getAttractionForces = function(obstacles) {
+    this.getRepulsionForces = function(obstacles) {
 
         var centroid = this.get_centroid();
         var name = this.name;
@@ -166,11 +166,11 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         }, init_force);
     }
 
-    this.getRepulsionForces = function() {
+    this.getAttractionForces = function() {
 
         var centroid = this.get_centroid();
         var name = this.name;
-        var init_force = new Point(0, 0);
+        var zero_force = new Point(0, 0);
         var scanDistance = distanceToScan;
         var movementDirection = this.movementVector;
     
@@ -187,30 +187,33 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             return flock_boid.get_centroid();
         })
         .filter(function(flock_centroid) {
-            var distanceVector = centroid - flock_centroid;
-            var flockMemberDirection = flock_centroid - centroid;
-            var angleBetween = Math.abs(movementDirection.angle - flockMemberDirection.angle);
+            
+            var vectorBetween = flock_centroid - centroid;
+            var angleBetween = Math.abs(movementDirection.angle - vectorBetween.angle);
+            // angle correction
             if (angleBetween > 180) angleBetween = 360 - angleBetween;
     
-            return distanceVector.length > 0 
-                && distanceVector.length <= scanDistance
-                && angleBetween <= 60; // should be a little ahead
+            return vectorBetween.length > 0 
+                && vectorBetween.length <= scanDistance
+                && angleBetween <= 60; // leader should be a little ahead (v-shaped field of view)
         })
-        .reduce(function (accumulativeVector, flock_centroid) {
+        // searching for a closest flock member
+        .reduce(function (closestMemberVector, flock_centroid) {
             
             // attractive direction (to flock member)
-            var distanceVector = flock_centroid - centroid;  
-            var minLength = accumulativeVector.length;
+            var vectorBetween = flock_centroid - centroid;  
+            var minLength = closestMemberVector.length;
 
-            // we need to maximize init_force in order it doesn't win
-            if (accumulativeVector === init_force) minLength = Number.MAX_SAFE_INTEGER;
+            // we need to maximize zero_force in order it doesn't win
+            if (closestMemberVector === zero_force) minLength = Number.MAX_SAFE_INTEGER;
 
-            return distanceVector.length < minLength ? distanceVector : accumulativeVector;
+            return vectorBetween.length < minLength ? vectorBetween : closestMemberVector;
 
-        }, init_force);
+        }, zero_force);
 
 
-        if (minVector !== init_force) {
+        // if we found something
+        if (minVector !== zero_force) {
             var flock_centroid = centroid + minVector;
             var ln = new Path.Line(flock_centroid, centroid);
             ln.strokeColor = color;
@@ -235,19 +238,16 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
                 this.changeAngle(decision.degree, true);
             }
 
-            var correction = this.getAttractionForces(obstacles);
-            correction /= smootheningFactor;
+            var repulsion = this.getRepulsionForces(obstacles);
+            repulsion /= smootheningFactor;
 
-            var correction2 = this.getRepulsionForces();
-            correction2 /= (smootheningFactor-700);
-/*
-            var ln = new Path.Line(this.get_centroid(), this.get_centroid() + correction);
-            ln.strokeColor = color;
-            ln.strokeWidth = 2;
-            lines.push(ln);
-*/
+            var attraction = this.getAttractionForces();
+            attraction /= (smootheningFactor / 2);
+
+            var totalCorrection = repulsion + attraction;
+
             // i should ONLY correct the movement ANGLE, but not it's length (speed)
-            correctionAngle = ((this.movementVector + correction) + correction2).angle;
+            correctionAngle = (this.movementVector + totalCorrection).angle;
 
             this.changeAngle(correctionAngle, false);
 
