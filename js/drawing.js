@@ -140,20 +140,20 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         })
         .concat(obstacles)
         .filter(function(flock_centroid) {
-            var distanceVector = centroid - flock_centroid;
-            var flockMemberDirection = flock_centroid - centroid;
-            var angleBetween = Math.abs(movementDirection.angle - flockMemberDirection.angle);
+
+            var vectorBetween = flock_centroid - centroid;
+            var angleBetween = Math.abs(movementDirection.angle - vectorBetween.angle);
             if (angleBetween > 180) angleBetween = 360 - angleBetween;
     
-            return distanceVector.length > 0 
-                && distanceVector.length <= scanDistance
-                && angleBetween <= 100; // can be a little behind
+            return vectorBetween.length > 0 
+                && vectorBetween.length <= scanDistance
+                && angleBetween <= 30; // flock member can be a little behind (/\-shaped field of view)
         })
         .reduce(function (accumulativeVector, flock_centroid) {
             // repulsive direction (from flock member)
-            var distanceVector = centroid - flock_centroid;
+            var vectorBetween = centroid - flock_centroid;
             // repulsion force is inversely proportional to the distance between objects
-            distanceVector.length = scanDistance - distanceVector.length;
+            vectorBetween.length = scanDistance - vectorBetween.length;
     
             //drawVectorFromPoint(flock_centroid, centroid, 'yellow');   
             var ln = new Path.Line(flock_centroid, centroid);
@@ -162,7 +162,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             lines.push(ln);
             //new Path.Circle(vector, 2).strokeColor = color;   
     
-            return accumulativeVector + distanceVector;
+            return accumulativeVector + vectorBetween;
         }, init_force);
     }
 
