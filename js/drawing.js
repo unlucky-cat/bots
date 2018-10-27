@@ -138,6 +138,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .filter(function(flock_boid) {
 
             var diffAngleBetween = Math.abs(this.movementVector.angle - flock_boid.movementVector.angle);
+            if (diffAngleBetween > 180) diffAngleBetween = 360 - diffAngleBetween;
 
             return diffAngleBetween > 90
         }.bind(this))
@@ -195,6 +196,8 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             
             var flock_centroid = flock_boid.get_centroid();
             var diffAngleBetween = Math.abs(this.movementVector.angle - flock_boid.movementVector.angle);
+            if (diffAngleBetween > 180) diffAngleBetween = 360 - diffAngleBetween;
+            
             var vectorBetween = flock_centroid - centroid;
             var angleBetween = Math.abs(this.movementVector.angle - vectorBetween.angle);
             // angle correction
