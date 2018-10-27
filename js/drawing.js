@@ -135,6 +135,12 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .filter(function (flock_boid) {
             return name !== flock_boid.name;
         })
+        .filter(function(flock_boid) {
+
+            var diffAngleBetween = Math.abs(this.movementVector.angle - flock_boid.movementVector.angle);
+
+            return diffAngleBetween > 90
+        }.bind(this))
         .map(function (flock_boid) {
             return flock_boid.get_centroid();
         })
@@ -181,11 +187,14 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .filter(function (flock_boid) {
             return name !== flock_boid.name;
         })
-        .map(function (flock_boid) {
-            return flock_boid.get_centroid();
-        })
-        .filter(function(flock_centroid) {
+        // filtering the boids: (visible)
+        // those are in the bounds of the "attractionAngle" (in a field of view)
+        // those are not further then the "distanceToScan" (in the distance)
+        // and those are facing the same direction (butt attraction)
+        .filter(function(flock_boid) {
             
+            var flock_centroid = flock_boid.get_centroid();
+            var diffAngleBetween = Math.abs(this.movementVector.angle - flock_boid.movementVector.angle);
             var vectorBetween = flock_centroid - centroid;
             var angleBetween = Math.abs(this.movementVector.angle - vectorBetween.angle);
             // angle correction
@@ -193,8 +202,12 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     
             return vectorBetween.length > 0 
                 && vectorBetween.length <= this.distanceToScan
+                && diffAngleBetween <= 120
                 && angleBetween <= this.attractionAngle; // leader should be a little ahead (v-shaped field of view)
         }.bind(this))
+        .map(function (flock_boid) {
+            return flock_boid.get_centroid();
+        })
         // searching for a closest flock member
         .reduce(function (closestMemberVector, flock_centroid) {
             
@@ -278,7 +291,7 @@ var getRandomAngle = function() {
     return -180 + Math.random() * 180;
 }
 
-var speed = .6;
+var speed = .8;
 new Boid('white', 'boid1', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 new Boid('red', 'boid2', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
 new Boid('lime', 'boid3', getRandomPoint(), getRandomAngle(), 1, speed, dm2().map).addToFlock();
