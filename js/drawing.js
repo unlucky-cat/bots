@@ -1,3 +1,45 @@
+/////////////////////// Vector ///////////////////////
+
+Point.Vector = function Vector(x, y) {
+    Point.call(this, x, y);
+
+    this.HasTheSameDirection = function(vector, angle) {
+
+        if (angle === undefined) angle = 70;
+
+        var diffAngleBetween = Math.abs(this.angle - vector.angle);
+        if (diffAngleBetween > 180) diffAngleBetween = 360 - diffAngleBetween;
+
+        return diffAngleBetween <= angle;
+    }
+
+    this.HasOppositeDirection = function(vector, angle) {
+
+        if (angle === undefined) angle = 80;
+
+        var diffAngleBetween = Math.abs(this.angle - vector.angle);
+        if (diffAngleBetween > 180) diffAngleBetween = 360 - diffAngleBetween;
+
+        return diffAngleBetween > angle;
+    }
+}
+
+Point.Vector.prototype = Object.create(Point.prototype);
+Point.Vector.prototype.constructor = Point.Vector;
+
+Point.Vector.CloneFromPoint = function(point) {
+    return new Point.Vector(point.x, point.y);
+};
+
+///////////////////////// Zero /////////////////////////
+
+Point.Zero = function Zero() {
+    Point.call(this, 0, 0);
+}
+
+Point.Zero.prototype = Object.create(Point.prototype);
+Point.Zero.prototype.constructor = Point.Zero;
+
 ////////////////////// Triangle //////////////////////
 
 Path.Triangle = function Triangle(p1, p2, p3) {
@@ -10,7 +52,7 @@ Path.Triangle = function Triangle(p1, p2, p3) {
         var x = this.segments.reduce(function(acc, curr) { return acc + curr.point.x; }, 0);
         var y = this.segments.reduce(function(acc, curr) { return acc + curr.point.y; }, 0);
     
-        return new Point(x/3, y/3);
+        return new Point.Vector(x/3, y/3);
     }
 
     this.get_vector_to = function(point) {
@@ -39,15 +81,15 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     
     // if headIndex > 2 and headIndex < 0 throw exeption!
 
-    var p1 = new Point(0, 60);
-    var p2 = new Point(8, 30);
-    var p3 = new Point(16, 60);
+    var p1 = new Point.Vector(0, 60);
+    var p2 = new Point.Vector(8, 30);
+    var p3 = new Point.Vector(16, 60);
 
     Path.Triangle.call(this, p1, p2, p3);
     this.distanceToScan = 120;
     this.smootheningFactor = 1500;
-    this.repulsionAngle = 30;
-    this.attractionAngle = 60;
+    this.repulsionAngle = 30; // flock member can be a little behind (v-shaped field of view)
+    this.attractionAngle = 60; // leader should be a little ahead (v-shaped field of view)
 /*
     var circle = new Path.Circle(this.get_centroid(), distanceToScan);
     circle.strokeColor = color;
@@ -79,7 +121,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         var mv = head[0] - center;
         mv.length = speed;
 
-        return mv;
+        return Point.Vector.CloneFromPoint(mv);
     })(p1, p2, p2, headIndex, initSpeed, this.get_centroid());
 
 
@@ -111,10 +153,10 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         var jumpPos;
 
         // you can send boundaries to the boid as a context...
-        if (nextPos.x <= 0) jumpPos = new Point(view.size.width, nextPos.y);
-        else if (nextPos.x >= view.size.width) jumpPos = new Point(0, nextPos.y);
-        else if (nextPos.y <= 0) jumpPos = new Point(nextPos.x, view.size.height);
-        else if (nextPos.y >= view.size.height) jumpPos = new Point(nextPos.x, 0);
+        if (nextPos.x <= 0) jumpPos = new Point.Vector(view.size.width, nextPos.y);
+        else if (nextPos.x >= view.size.width) jumpPos = new Point.Vector(0, nextPos.y);
+        else if (nextPos.y <= 0) jumpPos = new Point.Vector(nextPos.x, view.size.height);
+        else if (nextPos.y >= view.size.height) jumpPos = new Point.Vector(nextPos.x, 0);
         else jumpPos = nextPos;
 
         return jumpPos;
@@ -124,7 +166,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
 
         var centroid = this.get_centroid();
         var name = this.name;
-        var init_force = new Point(0, 0);
+        var init_force = new Point.Zero();
 
         lines.forEach(function (l) {
             l.remove();
@@ -135,12 +177,11 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .filter(function (flock_boid) {
             return name !== flock_boid.name;
         })
+        // filtering the boids: (visible)
+        // those are facing opposite directions (butt ignoring)
         .filter(function(flock_boid) {
 
-            var diffAngleBetween = Math.abs(this.movementVector.angle - flock_boid.movementVector.angle);
-            if (diffAngleBetween > 180) diffAngleBetween = 360 - diffAngleBetween;
-
-            return diffAngleBetween > 90
+            return this.movementVector.HasOppositeDirection(flock_boid.movementVector)
         }.bind(this))
         .map(function (flock_boid) {
             return flock_boid.get_centroid();
@@ -149,12 +190,10 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         .filter(function(flock_centroid) {
 
             var vectorBetween = flock_centroid - centroid;
-            var angleBetween = Math.abs(this.movementVector.angle - vectorBetween.angle);
-            if (angleBetween > 180) angleBetween = 360 - angleBetween;
     
             return vectorBetween.length > 0 
                 && vectorBetween.length <= this.distanceToScan
-                && angleBetween <= this.repulsionAngle; // flock member can be a little behind (/\-shaped field of view)
+                && this.movementVector.HasTheSameDirection(vectorBetween, this.repulsionAngle)
         }.bind(this))
         .reduce(function (accumulativeVector, flock_centroid) {
             // repulsive direction (from flock member)
@@ -177,7 +216,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
 
         var centroid = this.get_centroid();
         var name = this.name;
-        var zero_force = new Point(0, 0);
+        var zero_force = new Point.Zero();
     
         lines2.forEach(function (l) {
             l.remove();
@@ -194,19 +233,13 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         // and those are facing the same direction (butt attraction)
         .filter(function(flock_boid) {
             
-            var flock_centroid = flock_boid.get_centroid();
-            var diffAngleBetween = Math.abs(this.movementVector.angle - flock_boid.movementVector.angle);
-            if (diffAngleBetween > 180) diffAngleBetween = 360 - diffAngleBetween;
-            
+            var flock_centroid = flock_boid.get_centroid();           
             var vectorBetween = flock_centroid - centroid;
-            var angleBetween = Math.abs(this.movementVector.angle - vectorBetween.angle);
-            // angle correction
-            if (angleBetween > 180) angleBetween = 360 - angleBetween;
     
             return vectorBetween.length > 0 
                 && vectorBetween.length <= this.distanceToScan
-                && diffAngleBetween <= 120
-                && angleBetween <= this.attractionAngle; // leader should be a little ahead (v-shaped field of view)
+                && this.movementVector.HasTheSameDirection(flock_boid.movementVector)
+                && this.movementVector.HasTheSameDirection(vectorBetween, this.attractionAngle)
         }.bind(this))
         .map(function (flock_boid) {
             return flock_boid.get_centroid();
