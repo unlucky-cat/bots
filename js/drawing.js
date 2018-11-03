@@ -1,9 +1,40 @@
+////////////////////// LinesBox //////////////////////
+
+LinesBox = function LinesBox() {
+
+    var lines = [];
+
+    this.AddPoints = function(point1, point2, color, width) {
+
+        var ln = new Path.Line(point1, point2);
+        ln.strokeColor = color;
+        ln.strokeWidth = width;
+
+        this.AddLine(ln);
+
+        return ln;
+    }
+
+    this.AddLine = function(line) {
+
+        lines.push(line);
+    }
+
+    this.Clean = function() {
+
+        lines.forEach(function (l) {
+            l.remove();
+        });
+        lines.length = 0;
+    }
+}
+
 /////////////////////// Vector ///////////////////////
 
 Point.Vector = function Vector(x, y) {
     Point.call(this, x, y);
 
-    this.HasTheSameDirection = function(vector, angle) {
+    this.HasTheSameDirectionWith = function(vector, angle) {
 
         if (angle === undefined) angle = 70;
 
@@ -13,7 +44,7 @@ Point.Vector = function Vector(x, y) {
         return diffAngleBetween <= angle;
     }
 
-    this.HasOppositeDirection = function(vector, angle) {
+    this.HasOppositeDirectionWith = function(vector, angle) {
 
         if (angle === undefined) angle = 80;
 
@@ -99,8 +130,8 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     var center = new Path.Circle(this.get_centroid(), 2);
     center.strokeColor = color;
 
-    var lines = [];
-    var lines2 = [];
+    var linesBox = new LinesBox();
+    var linesBox2 = new LinesBox();
     
     this.onMove.push(function(pos) {
         //circle.position = pos;
@@ -168,10 +199,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         var name = this.name;
         var init_force = new Point.Zero();
 
-        lines.forEach(function (l) {
-            l.remove();
-        });
-        lines.length = 0;
+        linesBox.Clean();
     
         return this.flock
         .filter(function (flock_boid) {
@@ -181,7 +209,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         // those are facing opposite directions (butt ignoring)
         .filter(function(flock_boid) {
 
-            return this.movementVector.HasOppositeDirection(flock_boid.movementVector)
+            return this.movementVector.HasOppositeDirectionWith(flock_boid.movementVector)
         }.bind(this))
         .map(function (flock_boid) {
             return flock_boid.get_centroid();
@@ -193,7 +221,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     
             return vectorBetween.length > 0 
                 && vectorBetween.length <= this.distanceToScan
-                && this.movementVector.HasTheSameDirection(vectorBetween, this.repulsionAngle)
+                && this.movementVector.HasTheSameDirectionWith(vectorBetween, this.repulsionAngle)
         }.bind(this))
         .reduce(function (accumulativeVector, flock_centroid) {
             // repulsive direction (from flock member)
@@ -202,11 +230,15 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
             vectorBetween.length = this.distanceToScan - vectorBetween.length;
     
             //drawVectorFromPoint(flock_centroid, centroid, 'yellow');   
+            /*
             var ln = new Path.Line(flock_centroid, centroid);
             ln.strokeColor = color;
             ln.strokeWidth = 0.3;
             lines.push(ln);
+            */
             //new Path.Circle(vector, 2).strokeColor = color;   
+
+            linesBox.AddPoints(flock_centroid, centroid, color, 0.3);
     
             return accumulativeVector + vectorBetween;
         }.bind(this), init_force);
@@ -218,10 +250,7 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         var name = this.name;
         var zero_force = new Point.Zero();
     
-        lines2.forEach(function (l) {
-            l.remove();
-        });
-        lines2.length = 0;
+        linesBox2.Clean();
 
         var minVector =  this.flock
         .filter(function (flock_boid) {
@@ -238,8 +267,8 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
     
             return vectorBetween.length > 0 
                 && vectorBetween.length <= this.distanceToScan
-                && this.movementVector.HasTheSameDirection(flock_boid.movementVector)
-                && this.movementVector.HasTheSameDirection(vectorBetween, this.attractionAngle)
+                && this.movementVector.HasTheSameDirectionWith(flock_boid.movementVector)
+                && this.movementVector.HasTheSameDirectionWith(vectorBetween, this.attractionAngle)
         }.bind(this))
         .map(function (flock_boid) {
             return flock_boid.get_centroid();
@@ -262,11 +291,10 @@ Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action)
         // if we found something
         if (minVector !== zero_force) {
             var flock_centroid = centroid + minVector;
-            var ln = new Path.Line(flock_centroid, centroid);
-            ln.strokeColor = color;
-            ln.strokeWidth = 1;
-            ln.dashArray = [3, 10];
-            lines2.push(ln);
+
+            linesBox2
+            .AddPoints(flock_centroid, centroid, color, 1)
+            .dashArray = [3, 10];
 
             // attraction force is inversely proportional to the distance between objects
             minVector.length = this.distanceToScan - minVector.length;
