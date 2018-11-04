@@ -1,6 +1,6 @@
 ////////////////////// LinesBox //////////////////////
 
-LinesBox = function LinesBox() {
+var LinesBox = function() {
 
     var lines = [];
 
@@ -108,7 +108,7 @@ Path.Triangle.prototype.constructor = Path.Triangle;
 
 ///////////////////////// Boid /////////////////////////////
 
-Boid = function Boid(color, name, position, angle, headIndex, initSpeed, action) {
+var Boid = function (color, name, position, angle, headIndex, initSpeed, action) {
     
     // if headIndex > 2 and headIndex < 0 throw exeption!
 
